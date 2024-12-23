@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-    console.log('huh');
 });
 
 function openFullscreen(imageElement) {

@@ -370,10 +370,10 @@ def process_comment(comment):
     artist_md = f'''<div class="comment" markdown="1">
 <div class='id-container' markdown="1">
 ![]({pfp}){{ pfp loading=lazy }}
-<div markdown="1">
 **{name_md}** <small>{date_to_str(comment.createdAt)}</small><br>
-{comment.body}
 </div>
+<div class='comment-body' markdown="1">
+{comment.body}
 </div>
 </div>'''
     return artist_md
@@ -573,6 +573,9 @@ def gather_comments(data):
 
     for k, post in post_database.items():
         post.comments = sorted(post.comments, key=lambda c: c.createdAt)
+
+        for c in post.comments:
+            c.replies = sorted(c.replies, key=lambda c: c.createdAt)
 
 
 def gather_posts(data):
