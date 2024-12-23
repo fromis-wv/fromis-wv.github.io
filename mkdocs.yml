@@ -1,0 +1,49 @@
+site_name: fromis Weverse
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    scheme: slate
+    primary: deep purple
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.path
+    - navigation.prune
+  font:
+    text: Open Sans
+    code: JetBrains Mono
+  favicon: assets/fromis-logo-white.svg
+  logo: assets/fromis-logo-white.svg
+markdown_extensions:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+extra_css:
+  - stylesheets/extra.css
+extra_javascript:
+  - javascripts/extra.js
+nav:
+  - index.md
+  - Weverse Posts:
+    - wv-posts/index.md
+plugins:
+  - blog:
+      blog_dir: wv-posts
+      pagination: True
+      pagination_per_page: 50
+      blog_toc: True
+      post_readtime: false
+      post_date_format: MMMM d, Y hh:mm
+  - tags
