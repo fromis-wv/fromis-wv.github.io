@@ -184,9 +184,10 @@ class Post:
             return make_image_md(url)
         elif attachment_type == 'video':
             media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
+            thumb_path = f'/assets/videos/weverse_{attachment_id}-thumb.jpg'
             md = f"""
 <figure markdown="1">
-<video controls="controls">
+<video controls="controls" preload="none" poster="{thumb_path}">
 <source src="{media_path}#t=1" type="video/mp4">
 Your browser does not support the video tag.
 </video>

@@ -48,6 +48,7 @@
 .md-typeset video
 {
     max-height: 720px;
+    border-radius: 10px; /* Add rounded corners */
 }
 
 .md-typeset img
