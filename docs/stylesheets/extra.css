@@ -105,9 +105,9 @@
 
 .content-container
 {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    padding: 0px 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 0px 24px;
     max-height: 1440px; /* Limit the height */
     overflow: auto; /* Show scrollbars if content overflows */
 }
