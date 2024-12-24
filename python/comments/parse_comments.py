@@ -57,16 +57,19 @@ def get_datetime(timestamp):
     time = int(timestamp) / 1000
     return datetime.datetime.fromtimestamp(time, tz=ZoneInfo("Asia/Seoul"))
 
-def make_image_md(url, caption='', zoom_click=True):
+def make_image_md(url, caption='', zoom_click=True, figure=True):
     if caption:
         caption = f'<figcaption>{caption}</figcaption>'
 
     zoom_md = 'onclick="openFullscreen(this)' if zoom_click else ''
 
-    return textwrap.dedent(f"""\
-                        <figure markdown="1">
-                        ![]({url}){{ loading=lazy {zoom_md}"}}{caption}
-                        </figure>""")
+    if figure:
+        return textwrap.dedent(f"""\
+                            <figure markdown="1">
+                            ![]({url}){{ loading=lazy {zoom_md}"}}{caption}
+                            </figure>""")
+    else:
+        return textwrap.dedent(f'![]({url}){{ loading=lazy {zoom_md}"}}{caption}')
 
 def make_iframe_md(embed_url, display_url):
     return textwrap.dedent(f"""\
@@ -236,7 +239,7 @@ Your browser does not support the video tag.
             if photos := image.get('photos'):
                 for p in photos:
                     url = p['url']
-                    lines.append(make_image_md(url))
+                    lines.append(make_image_md(url, figure=True))
 
         if youtube := self.extension.get('youtube'):
             youtubeVideoId = youtube['youtubeVideoId']
