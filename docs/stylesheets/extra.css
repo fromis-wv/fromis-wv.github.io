@@ -179,3 +179,15 @@ iframe {
     color: white;
     scale: 1.25;
 }
+
+.md-typeset h1
+{
+    font-weight: bold;
+}
+
+.md-typeset h1,
+.md-nav__title,
+.md-nav__item--section>.md-nav__link[for]
+{
+    color: #b393ff
+}
