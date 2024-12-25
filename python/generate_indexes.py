@@ -7,7 +7,7 @@ def make_member(member_name):
 [DM](https://fromis-dm.github.io/posts/{member_name.lower()}/)
 
     '''
-    name = f'docs/{member_name.lower()}/index.md'
+    name = f'docs/wv-moments/{member_name.lower()}/index.md'
     with open(name, mode='w', encoding='utf-8') as txt:
         txt.writelines(out_file)
 

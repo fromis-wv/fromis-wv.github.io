@@ -167,11 +167,7 @@ f"""
 def make_page():
     out_file = \
 f"""---
-draft: true 
 date: 2024-01-31 
-categories:
-  - Hello
-  - World
 ---
 
 # Moments
@@ -253,11 +249,11 @@ def main():
 
 
     out_file = make_page()
-    folder = f'docs/{member_name.lower()}'
+    folder = f'docs/wv-moments/{member_name.lower()}'
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-    out_name = f'docs/{member_name.lower()}/moments.md'
+    out_name = f'docs/wv-moments/{member_name.lower()}/moments.md'
     with open(out_name, mode='w', encoding='utf-8') as txt:
         txt.writelines(out_file)
 
