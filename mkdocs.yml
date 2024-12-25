@@ -1,4 +1,6 @@
 site_name: fromis Weverse
+hooks:
+  - overrides/.hooks/sort_posts_latest.py
 theme:
   name: material
   custom_dir: overrides
