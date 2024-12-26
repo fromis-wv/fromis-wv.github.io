@@ -30,8 +30,6 @@ POST_TYPES = {POSTTYPE_NORMAL, POSTTYPE_MOMENT, POSTTYPE_MOMENT_W1, POSTTYPE_OFF
 PARENT_TYPE_POST = 'POST'
 PARENT_TYPE_COMMENT = 'COMMENT'
 
-post_database = dict()
-
 
 def remove_emojis(data):
     emoj = re.compile("["
@@ -59,6 +57,18 @@ def remove_emojis(data):
 def get_datetime(timestamp):
     time = int(timestamp) / 1000
     return datetime.datetime.fromtimestamp(time, tz=ZoneInfo("Asia/Seoul"))
+
+
+def make_video_md(attachment_id):
+    media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
+    thumb_path = f'/assets/videos/weverse_{attachment_id}-thumb.jpg'
+    return dedent(f"""
+    <figure markdown="1">
+    <video controls="controls" preload="none" poster="{thumb_path}">
+    <source src="{media_path}#t=1" type="video/mp4">
+    Your browser does not support the video tag.
+    </video>
+    </figure>""")
 
 
 def make_image_md(url, caption='', zoom_click=True, figure=True):
@@ -142,7 +152,8 @@ class Post:
         self.maxCommentCountReached = data.get('maxCommentCountReached')
         self.membershipOnly = data.get('membershipOnly')
         self.tags = data.get('tags')
-        self.body = data.get('body').replace('#', '\\#')  # .replace('\n', '<br>')
+        self.body = data.get('body')
+
         self.availableActions = data.get('availableActions')
         self.bookmarked = data.get('bookmarked')
         self.hasProduct = data.get('hasProduct')
@@ -151,6 +162,19 @@ class Post:
         if self.postType not in POST_TYPES:
             print(f'UNKNOWN POST TYPE {self.postType}')
             breakpoint()
+
+        if self.body is None:
+            if self.postType == 'MOMENT':
+                self.body = self.extension['moment'].get('body')
+            elif self.postType == 'MOMENT_W1':
+                self.body = self.extension['momentW1'].get('body')
+            else:
+                breakpoint()
+
+        if self.body is None:
+            self.body = ''
+
+        self.body = self.body.replace('#', '\\#')  # .replace('\n', '<br>')
 
         self.comments = set()
         self.json_data = data
@@ -283,7 +307,44 @@ Your browser does not support the video tag.
 
         return out  # [o.strip() for o in out if o.strip()]
 
+    def get_moment_ext(self):
+        if self.postType == 'MOMENT':
+            return self.extension['moment']
+        elif self.postType == 'MOMENT_W1':
+            return self.extension['momentW1']
+        return None
+
+    def process_moment(self):
+        ext = self.get_moment_ext()
+        content = ''
+
+        if photo := ext.get('photo'):
+            content = make_image_md(photo['url'])
+
+        if video := ext.get('video'):
+            content = make_video_md(video['videoId'])
+
+        if backgroundImage := ext.get('backgroundImageUrl'):
+            content = make_image_md(backgroundImage)
+
+        if self.plainBody and len(self.plainBody) > 0:
+            return dedent(f"""
+<figure markdown="1">
+{content}
+<figcaption>{self.plainBody.replace('\n', '<br>')}</figcaption>
+</figure>
+            """
+                          )
+        else:
+            return dedent(f"""
+<figure markdown="1">
+{content}
+</figure>""")
+
     def process_body(self):
+        if self.postType == POSTTYPE_MOMENT or self.postType == POSTTYPE_MOMENT_W1:
+            return self.process_moment()
+
         # print(self.attachment)
         # pattern = r'<(.*?)\s*/>'
         # split_body = [self.process_attachment(s) for s in re.split(pattern, self.body) if s.strip()]
@@ -585,10 +646,16 @@ def make_markdown(posts):
             txt.writelines(out_file)  # print(len(out_file), len(out_file.split('\n')))
 
 
-def gather_comments(data):
+def get_comment_data():
+    with open('raw/post-data/all_comments.json', 'r', encoding='utf-8') as file:
+        json_data = json.load(file)
+        return json_data
+
+
+def gather_comments(comment_data, post_database):
     all_comments = dict()
 
-    for comment_data in data:
+    for comment_data in comment_data:
         root = comment_data['root']['data']
         post_id = root['postId']
 
@@ -614,15 +681,19 @@ def gather_comments(data):
             main_comment = parent_comment
 
         if post_id in post_database:
-            post_database[post_id].comments.add(main_comment)
-        else:
-            print('FAILED TO FIND', post_id)
+            post_database[post_id].comments.add(main_comment)  # else:  #     print('FAILED TO FIND', post_id)
 
     for k, post in post_database.items():
         post.comments = sorted(post.comments, key=lambda c: c.createdAt)
 
         for c in post.comments:
             c.replies = sorted(c.replies, key=lambda c: c.createdAt)
+
+
+def make_post_database(data):
+    post_database = gather_posts(data)
+    gather_comments(get_comment_data(), post_database)
+    return post_database
 
 
 def gather_posts(data):
@@ -644,7 +715,7 @@ def gather_posts(data):
     return posts
 
 
-def make_authors():
+def make_authors(post_database):
     authors = set()
     for k, post in post_database.items():
         for m in get_members(post):

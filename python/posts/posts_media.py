@@ -18,7 +18,7 @@ skip_duplicate = True
 skip_images = True
 
 copy_image = False
-copy_video = False
+copy_video = True
 
 source_folder = ''
 output_folder = ''
@@ -148,4 +148,5 @@ if __name__ == '__main__':
     #     source_folder = f'raw/{member_name}/posts'
     #     output_folder = f'docs/media/{member_name}/posts'
     #     run_folder(source_folder, output_folder)
-    run_folder('raw/post-media/videos', 'docs/assets/videos')
+    # run_folder('raw/post-media/videos', 'docs/assets/videos')
+    run_folder('raw/moments-media', 'docs/assets/videos')

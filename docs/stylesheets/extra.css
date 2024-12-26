@@ -83,6 +83,15 @@
     border-radius: 50%;
 }
 
+.artist-img
+{
+    vertical-align: center;
+    max-width: 96px;
+    max-height: 96px;
+    margin-right: 6px;
+    border-radius: 20%
+}
+
 .id-container p
 {
     margin-block-end: 0;

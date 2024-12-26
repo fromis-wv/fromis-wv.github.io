@@ -8,6 +8,18 @@ import time
 from yt_dlp.extractor.weverse import WeverseIE
 from yt_dlp.utils import ExtractorError
 
+members = {
+    'jiheon': '5fb309bc7489a576484431ba8338807e',  # jh
+    'hayoung': '67b4c6fb2220ac6705aa97046f3503a1',  # hy
+    'chaeyoung': '65eff6ab044ae8dea6816794f11a6fc1',  # cy
+    'jiwon': '6599dbbcaa26237c2ab0f3becb421b45',  # jw
+    'jisun': '01435f74a49ba8a519705ad242348232',  # js
+    'saerom': '326c0d1e7045798aa3964e2028c34628',  # sr
+    'seoyeon': '56bdfafb606d9ce1b4ecdd572595e242',  # sy
+    'nagyung': '5477d46be848bd40252f9d13ef62cb4d',  # ng
+    'gyuri': 'db56036fc59a94a9ef617261c90c783f'  # gr
+}
+
 params = {
     # 'verbose': True,
     'quiet': True,
@@ -35,15 +47,28 @@ def get_next_page(json_data):
 def get_prev_page(json_data):
     paging = json_data['paging']
     if param := paging.get('previousParams'):
-        return param['prev'].replace(',', '%2C')
+        if prev:= param.get('prev'):
+            return prev.replace(',', '%2C')
+
+        if prev:= param.get('before'):
+            return prev.replace(',', '%2C')
+
+        breakpoint()
 
     return None
 
 def run_extr(extr, req, out_data=None, grab_data=True):
     print(req)
 
-    json_data = extr._call_api(req, '')
-    print(json_data)
+    while True:
+        try:
+            json_data = extr._call_api(req, '')
+            print(json_data)
+            break
+        except Exception as e:
+            print(e)
+            breakpoint()
+            time.sleep(5.0)
 
     if out_data is not None:
         if grab_data:
@@ -83,7 +108,7 @@ def write_all_requests(req, initial_req, filename, use_after, skip_exists=False)
             initial = None
 
         if use_after and after:
-            mod_req += f'?after={after}'
+            mod_req += f'&after={after}'
         elif not use_after and prev:
             mod_req += f'?prev={prev}'
 
@@ -229,11 +254,25 @@ def write_all_live_comments():
 '/chat/v1.0/chat-N1RpH-/artistMessages?after=1728657034748%2C6599dbbcaa26237c2ab0f3becb421b45&limit=50&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1734824539937&wmd=WclqbqNrV3vDU2vwdby%2FOKWl0vA%3D'
 '/media/v1.0/community-36/searchAllMedia?after=1722342300000%2C1722316670967&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postsV1&gcc=AU&language=en&os=WEB&platform=WEB&sortOrder=DESC&wpf=pc&wmsgpad=1734826385640&wmd=s30OGAB32aQptBPF1%2Bpyi%2FbFiBg%3D'
 
+'/post/v1.0/member-5fb309bc7489a576484431ba8338807e/posts?appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postsV1&filterType=MOMENT&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735177267178&wmd=CeJPpNXyWd2bO4aXZ1C%2B3X0XBT4%3D'
+
 def main():
-    req = '/media/v1.0/community-36/searchAllMedia'
-    # write_single(req, 'test')
+    # req = '/media/v1.0/community-36/searchAllMedia'
+    # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
+    # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
+    # write_single(req, 'raw/test', False)
+
     # write_all_requests(req, req, 'raw/post-data/searchAllMedia', True)
-    write_all_post_media()
+    # write_all_post_media()
+
+    'https://global.apis.naver.com/weverse/wevweb/post/v1.0/member-5fb309bc7489a576484431ba8338807e/posts?after=1698763879873%2C27023472&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postV1&filterType=MOMENT_VIEWER&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178426948&wmd=xVsr5ooMlAolx3fADGZQguc2CzY%3D'
+
+    for m, id in members.items():
+        req = f'/post/v1.0/member-{id}/posts?fieldSet=postsV1&filterType=MOMENT_VIEWER&limit=1'
+        write_all_requests(req, req, f'raw/post-data/moments/{m}', True)
 
 
 main()
+
+# 'https://global.apis.naver.com/weverse/wevweb/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?after=1699369636979%2C27138103&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postV1&filterType=MOMENT_VIEWER&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178210447&wmd=Y1OTRioyq7vF2%2FSYTL09CAraDDM%3D'
+# 'https://global.apis.naver.com/weverse/wevweb/member/v1.1/community-36/artistMembers?appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=artistMembersV1&filterType=MOMENT&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178123317&wmd=KHioIqTMvGRFPAxb3jUuMb0WdaE%3D'
