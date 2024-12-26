@@ -10,16 +10,18 @@ from mkdocs.structure.files import InclusionLevel
 
 
 def on_config(config: MkDocsConfig):
-    blog_plugin: BlogPlugin = config.plugins.get("material/blog") or config.plugins.get("blog")
-    if blog_plugin:
-        for i, e in enumerate(config.plugins.events['files']):
-            if hasattr(e, "__self__"):
-                if isinstance(e.__self__, BlogPlugin):
-                    config.plugins.events['files'][i] = types.MethodType(patch_on_files, blog_plugin)
+    blog_plugins = [(name, p) for name, p in config.plugins.items() if isinstance(p, BlogPlugin)]
+
+    for blog_name, blog in blog_plugins:
+        for i, event in enumerate(config.plugins.events['files']):
+            if hasattr(event, "__self__"):
+                if event.__self__ is blog:
+                    config.plugins.events['files'][i] = types.MethodType(patch_on_files, blog)
+                    print(f'sort_posts_latest: Patching {blog_name}')
 
 
 def patch_on_files(self: BlogPlugin, files, *, config):
-    print('Running sort_posts_latest: patch_on_files')
+    print(f'sort_posts_latest Running patch_on_files {self}')
     if not self.config.enabled:
         return
 
