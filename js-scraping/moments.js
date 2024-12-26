@@ -4,19 +4,37 @@ post_overview = []
 
 async function down_moment()
 {
-    // let down = document.getElementsByClassName("DownloadButtonView_button_download__zjP42 DownloadButtonView_-moment__NmLkQ")[0]
+    // 'DownloadButtonView_button_download__zjP42 DownloadButtonView_-moment__NmLkQ'
+    // let down = document.getElementsByClassName("DownloadButtonView_button_download__zjP42")[0]
 
     while (true)
     {
-        await process_moment()
-        // down.click()
+        // let down = null;
+        // for (let i = 0; i < 50; i++)
+        // {
+        //     down = document.getElementsByClassName("DownloadButtonView_button_download__zjP42")[0]
+        //     if (down && down.enabled)
+        //     {
+        //         break;
+        //     }
+        //     await new Promise(resolve => setTimeout(resolve, 100));
+        // }
+
+        let down = document.getElementsByClassName("DownloadButtonView_button_download__zjP42")[0];
+        // await process_moment()
+        if (down)
+        {
+            console.log('click download? ' + document.location)
+            down.click()
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         let next_btn = document.getElementsByClassName("MomentPageOutlineView_button_item__siPgg MomentPageOutlineView_-next__2KZST")[0]
         if (!next_btn.disabled)
         {
             next_btn.click()
             // setTimeout(down_moment, 1500);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
         else
         {
@@ -25,9 +43,9 @@ async function down_moment()
         }
     }
 
-    download_all_thumb()
+    //download_all_thumb()
 
-    save_csv()
+    // save_csv()
     // let row_strs = []
     // for (let row of all_rows)
     // {
@@ -450,8 +468,8 @@ function save_csv()
 
 async function process_moment()
 {
-    console.log('NEED TO FIX THE CLICK MORE BUTTON BEFORE RUNNING THIS AGAIN')
-    return false;
+    // console.log('NEED TO FIX THE CLICK MORE BUTTON BEFORE RUNNING THIS AGAIN')
+    // return false;
 
     root_name = window.location.href.split('/').at(-1)
     console.log(root_name)
@@ -474,7 +492,7 @@ async function process_moment()
 
     post_overview.push(overview_row)
 
-    await get_comments()
+//    await get_comments()
 
     if (!do_batch)
     {
