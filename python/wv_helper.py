@@ -1,13 +1,15 @@
-import datetime
 import json
 import datetime
 import os
 import random
+import time
 import re
 import shutil
 import textwrap
 from tabnanny import check
 from zoneinfo import ZoneInfo
+
+import requests
 import tzdata
 from textwrap import dedent
 import chardet
@@ -764,3 +766,33 @@ def load_json_file(file_name):
     with open(file_name, 'r', encoding='utf-8') as file:
         json_data = json.load(file)
         return json_data
+
+
+def get_ext(file):
+    return file.rsplit('.')[-1]
+
+def download_img(image_url, file_path, skip_exists=True):
+    if skip_exists and os.path.exists(file_path):
+        print('skip')
+        return
+
+    while True:  # Infinite loop to keep trying
+        try:
+            # Send a GET request to the URL
+            print(f"Downloading {file_path} {image_url}")
+            response = requests.get(image_url)
+
+            # Check if the request was successful
+            if response.status_code == 200:
+                print("Writing to file...")
+                # Open a file in binary write mode to save the image
+                with open(file_path, "wb") as file:
+                    file.write(response.content)
+                    print("Image downloaded successfully!")
+                return  # Exit the loop if download is successful
+            else:
+                print(f"Failed to download image. Status code: {response.status_code}")
+                time.sleep(10)  # Optional: Wait before retrying
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            time.sleep(10)  # Optional: Wait before retrying

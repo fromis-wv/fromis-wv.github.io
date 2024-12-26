@@ -273,14 +273,15 @@ def gather_posts(data):
 def filter_posts(posts):
     out_posts = []
     for p in posts:
-        # if p.has_attachment('snippet'):
-        #     out_posts.append(p)
+        # if not p.has_attachment('snippet'):
+        #     continue
 
         types = {
             # POSTTYPE_OFFICIAL,
             # POSTTYPE_YOUTUBE,
             # POSTTYPE_VIDEO,
             # POSTTYPE_IMAGE
+            POSTTYPE_MOMENT
         }
 
         # TODO: INSERT POSTTYPE_YOUTUBE
@@ -307,8 +308,25 @@ def make_authors():
         if post.author not in authors:
             authors.add(post.author)
 
-    text = ''
+    missing_thumb = []
     for author in authors:
+        ext = wv_helper.get_ext(author.profileImageUrl.removesuffix(','))
+        if not os.path.exists(f'raw/authors/{author.memberId}.{ext}'):
+            missing_thumb.append(author)
+
+    for i, author in enumerate(missing_thumb):
+        print(i, '/', len(missing_thumb), author.profileImageUrl)
+
+        expected_ext = {'png', 'jpg', 'jpeg'}
+        ext = wv_helper.get_ext(author.profileImageUrl.removesuffix(','))
+        if ext not in expected_ext:
+            print(author.profileImageUrl)
+            breakpoint()
+        file_name = f'raw/authors/{author.memberId}.{ext}'
+        wv_helper.download_img(author.profileImageUrl, file_name)
+
+    text = ''
+    for i, author in enumerate(authors):
         name = str(author.profileName).replace('\x81', '').replace('\x8d', '').replace("'", '')
         if len(name) == 0:
             name = '(Error emojis)'
