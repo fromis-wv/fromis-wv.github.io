@@ -356,7 +356,7 @@ def main():
 
     # verify_posts(sorted_posts)
 
-    # make_markdown(sorted_posts)
+    make_markdown(sorted_posts)
 
 
 if __name__ == '__main__':
