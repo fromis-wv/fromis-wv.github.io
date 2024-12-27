@@ -5,19 +5,45 @@ import types
 
 from material.plugins.blog.plugin import BlogPlugin
 from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.plugins import PrefixedLogger
-from mkdocs.structure.files import InclusionLevel
+from mkdocs.exceptions import PluginError
+from mkdocs.structure.nav import Section
+from mkdocs.plugins import PrefixedLogger, event_priority
+from mkdocs.structure.files import InclusionLevel, Files
+from material.plugins.blog.structure import Category, Post, View, Excerpt, Archive
 
+members_ids = {
+    'Jiheon': '5fb309bc7489a576484431ba8338807e',  # jh
+    'Hayoung': '67b4c6fb2220ac6705aa97046f3503a1',  # hy
+    'Chaeyoung': '65eff6ab044ae8dea6816794f11a6fc1',  # cy
+    'Jiwon': '6599dbbcaa26237c2ab0f3becb421b45',  # jw
+    'Jisun': '01435f74a49ba8a519705ad242348232',  # js
+    'Saerom': '326c0d1e7045798aa3964e2028c34628',  # sr
+    'Seoyeon': '56bdfafb606d9ce1b4ecdd572595e242',  # sy
+    'Nagyung': '5477d46be848bd40252f9d13ef62cb4d',  # ng
+    'Gyuri': 'db56036fc59a94a9ef617261c90c783f'  # gr
+}
+
+ids_to_name = {v: k for k, v in members_ids.items()}
+
+class CustomView(View):
+    type = 'CustomView'
+    pass
 
 def on_config(config: MkDocsConfig):
-    blog_plugins = [(name, p) for name, p in config.plugins.items() if isinstance(p, BlogPlugin)]
+    blog_plugins: list[tuple[str, BlogPlugin]] = [(name, p) for name, p in config.plugins.items() if isinstance(p, BlogPlugin)]
 
     for blog_name, blog in blog_plugins:
-        for i, event in enumerate(config.plugins.events['files']):
-            if hasattr(event, "__self__"):
-                if event.__self__ is blog:
-                    config.plugins.events['files'][i] = types.MethodType(patch_on_files, blog)
-                    print(f'sort_posts_latest: Patching {blog_name}')
+        blog._generate_categories = types.MethodType(patch_generate_categories, blog)
+
+    patch_event('files', patch_on_files, config)
+    patch_event('nav', patch_on_nav, config)
+
+def patch_event(name, func, config):
+    for i, event in enumerate(config.plugins.events[name]):
+        if hasattr(event, "__self__"):
+            if isinstance(event.__self__, BlogPlugin):
+                config.plugins.events[name][i] = types.MethodType(func, event.__self__)
+                print(f'Patching {event.__self__} {func}')
 
 
 def patch_on_files(self: BlogPlugin, files, *, config):
@@ -75,6 +101,135 @@ def patch_on_files(self: BlogPlugin, files, *, config):
 
     # Ensure that entrypoint is always included in navigation
     self.blog.file.inclusion = InclusionLevel.INCLUDED
+
+def patch_generate_categories(self, config: MkDocsConfig, files: Files):
+    for post in self.blog.posts:
+        authors = post.meta['authors'] if 'authors' in post.meta else []
+
+        for author_cat in post.config.categories:
+            name = f'Comments'
+            path = self._format_path_for_category(f'{author_cat} {name}')
+            yield from make_file(name, post, self, files, path, config, CustomView, author_cat)
+
+        for author_name, author_id in members_ids.items():
+            # print(post.meta)
+            # print('authors', post.authors)
+
+            if len(authors) == 0:
+                continue
+
+            main_author = authors[0]
+
+            if main_author != author_id:
+                continue
+
+            if tags := post.meta.get('tags'):
+                # print('my tags', tags)
+                if 'Artist Post' in tags:
+                    name = f'Artist Posts'
+                    path = self._format_path_for_category(f'{author_name} {name}')
+                    yield from make_file(name, post, self, files, path, config, CustomView, ids_to_name[main_author])
+
+                if 'Moment' in tags:
+                    name = f'Moments'
+                    path = self._format_path_for_category(f'{author_name} {name}')
+                    yield from make_file(name, post, self, files, path, config, CustomView, ids_to_name[main_author])
+
+def make_file(name, post, blog, files, path, config, type, data):
+    categories = blog.config.categories_allowed or [name]
+    if name not in categories:
+        docs = os.path.relpath(config.docs_dir)
+        path = os.path.relpath(post.file.abs_src_path, docs)
+        raise PluginError(f"Error reading categories of post '{path}' in "
+                          f"'{docs}': category '{name}' not in allow list")
+
+    # Create file for view, if it does not exist
+    file = files.get_file_from_path(path)
+    if not file or blog.temp_dir not in file.abs_src_path:
+        file = blog._path_to_file(path, config)
+        files.append(file)
+
+        # Create file in temporary directory and temporarily remove
+        # from navigation, as we'll add it at a specific location
+        blog._save_to_file(file.abs_src_path, f"# {name}")
+        file.inclusion = InclusionLevel.EXCLUDED
+
+    # Create and yield view
+    if not isinstance(file.page, type):
+        view = type(name, file, config)
+        view.type = data
+        yield view #type(name, file, config)
+
+    file.page.posts.append(post)
+
+# Attach posts and views to navigation (run later) - again, we allow other
+# plugins to alter the navigation before we start to attach posts and views
+# generated by this plugin at the correct locations in the navigation. Also,
+# we make sure to correct links to the parent and siblings of each page.
+@event_priority(-50)
+def patch_on_nav(self, nav, *, config, files):
+    if not self.config.enabled:
+        return
+
+    # If we're not building a standalone blog, the entrypoint will always
+    # have a parent when it is included in the navigation. The parent is
+    # essential to correctly resolve the location where the archive and
+    # category views are attached. If the entrypoint doesn't have a parent,
+    # we know that the author did not include it in the navigation, so we
+    # explicitly mark it as not included.
+    if not self.blog.parent and self.config.blog_dir != ".":
+        self.blog.file.inclusion = InclusionLevel.NOT_IN_NAV
+
+    # Attach posts to entrypoint without adding them to the navigation, so
+    # that the entrypoint is considered to be the active page for each post
+    self._attach(self.blog, [None, *reversed(self.blog.posts), None])
+    for post in self.blog.posts:
+        post.file.inclusion = InclusionLevel.NOT_IN_NAV
+
+    # Revert temporary exclusion of views from navigation
+    for view in self._resolve_views(self.blog):
+        view.file.inclusion = self.blog.file.inclusion
+        for page in view.pages:
+            page.file.inclusion = self.blog.file.inclusion
+
+    # Attach views for archive
+    if self.config.archive:
+        title = self._translate(self.config.archive_name, config)
+        views = [_ for _ in self.blog.views if isinstance(_, Archive)]
+
+        # Attach and link views for archive
+        if self.blog.file.inclusion.is_in_nav():
+            self._attach_to(self.blog, Section(title, views), nav)
+
+    # Attach views for categories
+    if self.config.categories:
+        title = self._translate(self.config.categories_name, config)
+        views = [_ for _ in self.blog.views if isinstance(_, Category)]
+
+        # Attach and link views for categories, if any
+        if self.blog.file.inclusion.is_in_nav() and views:
+            self._attach_to(self.blog, Section(title, views), nav)
+
+    ### BEGIN CUSTOM LOGIC
+    views = [_ for _ in self.blog.views if isinstance(_, CustomView)]
+
+    views_by_title = dict()
+    for v in views:
+        title = v.type
+        views_by_title.setdefault(title, list()).append(v)
+
+    for title, views in views_by_title.items():
+        print(title, views)
+        # Attach and link views for categories, if any
+        if self.blog.file.inclusion.is_in_nav():
+            self._attach_to(self.blog, Section(title, views), nav)
+    ### END CUSTOM LOGIC
+
+    # Attach pages for views
+    if self.config.pagination:
+        for view in self._resolve_views(self.blog):
+            for at in range(1, len(view.pages)):
+                self._attach_at(view.parent, view, view.pages[at])
 
 
 HOOK_NAME: str = "sort_posts_latest"

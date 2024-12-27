@@ -1,1 +1,1 @@
-# Weverse Posts
+# All Posts
