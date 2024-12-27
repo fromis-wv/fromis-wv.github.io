@@ -32,6 +32,26 @@ POST_TYPES = {POSTTYPE_NORMAL, POSTTYPE_MOMENT, POSTTYPE_MOMENT_W1, POSTTYPE_OFF
 PARENT_TYPE_POST = 'POST'
 PARENT_TYPE_COMMENT = 'COMMENT'
 
+video_redirects = {
+    '4-1033524': 'u9sQbsLseuM',
+    '2-22': 'zqYAPFGKddU',
+    '3-268692': 'o__BToVL030',
+    '3-316987': '-Znw-iK_Dyk',
+    '2-227577': 'xYy49ad4-GY',
+    '2-290970': 'xYy49ad4-GY'
+}
+
+members_ids = {
+    'jiheon': '5fb309bc7489a576484431ba8338807e',  # jh
+    'hayoung': '67b4c6fb2220ac6705aa97046f3503a1',  # hy
+    'chaeyoung': '65eff6ab044ae8dea6816794f11a6fc1',  # cy
+    'jiwon': '6599dbbcaa26237c2ab0f3becb421b45',  # jw
+    'jisun': '01435f74a49ba8a519705ad242348232',  # js
+    'saerom': '326c0d1e7045798aa3964e2028c34628',  # sr
+    'seoyeon': '56bdfafb606d9ce1b4ecdd572595e242',  # sy
+    'nagyung': '5477d46be848bd40252f9d13ef62cb4d',  # ng
+    'gyuri': 'db56036fc59a94a9ef617261c90c783f'  # gr
+}
 
 def remove_emojis(data):
     emoj = re.compile("["
@@ -60,19 +80,6 @@ def get_datetime(timestamp):
     time = int(timestamp) / 1000
     return datetime.datetime.fromtimestamp(time, tz=ZoneInfo("Asia/Seoul"))
 
-
-def make_video_md(attachment_id):
-    media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
-    thumb_path = f'/assets/videos/weverse_{attachment_id}-thumb.jpg'
-    return dedent(f"""
-    <figure markdown="1">
-    <video controls="controls" preload="none" poster="{thumb_path}">
-    <source src="{media_path}#t=1" type="video/mp4">
-    Your browser does not support the video tag.
-    </video>
-    </figure>""")
-
-
 def make_image_md(url, caption='', zoom_click=True, figure=True):
     if caption:
         caption = f'<figcaption>{caption}</figcaption>'
@@ -82,18 +89,24 @@ def make_image_md(url, caption='', zoom_click=True, figure=True):
     if figure:
         return textwrap.dedent(f"""\
                             <figure markdown="1">
-                            ![]({url}){{ loading=lazy {zoom_md}"}}{caption}
+                            ![]({url+'?type=e1920'}){{ loading=lazy {zoom_md}"}}{caption}
                             </figure>""")
     else:
-        return textwrap.dedent(f'![]({url}){{ loading=lazy {zoom_md}"}}{caption}')
+        return textwrap.dedent(f'![]({url+'?type=e1920'}){{ loading=lazy {zoom_md}"}}{caption}')
 
 
-def make_iframe_md(embed_url, display_url):
-    return textwrap.dedent(f"""\
-    <figure class="snippet" markdown="1">
-    <iframe src="{embed_url}"></iframe>
-    <figcaption><a href="{display_url}">{display_url}</a></figcaption>
-    </figure>""")
+def make_iframe_md(embed_url, display_url=None):
+    if display_url is None:
+        return textwrap.dedent(f"""\
+                <figure class="snippet" markdown="1">
+                <iframe src="{embed_url}" frameborder="0" allow="fullscreen"></iframe>
+                </figure>""")
+    else:
+        return textwrap.dedent(f"""\
+                <figure class="snippet" markdown="1">
+                <iframe src="{embed_url}" frameborder="0" allow="fullscreen"></iframe>
+                <figcaption><a href="{display_url}">{display_url}</a></figcaption>
+                </figure>""")
 
 
 class Author:
@@ -139,7 +152,7 @@ class Post:
         self.viewerEmotionId = data.get('viewerEmotionId')
         self.extension = data.get('extension')
         self.errorCode = data.get('errorCode')
-        self.attachment = data.get('attachment')
+        self.attachment = data.get('attachment') if data.get('attachment') else dict()
         self.sectionType = data.get('sectionType')
         self.locked = data.get('locked')
         self.emotionCount = data.get('emotionCount')
@@ -207,6 +220,18 @@ class Post:
                 authors.append(m)
         return authors
 
+    def get_tag_type(self):
+        if self.postType == POSTTYPE_MOMENT or self.postType == POSTTYPE_MOMENT_W1:
+            return 'Moment'
+
+        if self.author.memberId in members_ids.values():
+            return 'Artist Post'
+
+        if self.author.hasOfficialMark:
+            return 'Official Post'
+
+        return 'Fan Post'
+
     def get_categories(self):
         categories = []  # [ post.postType ]
         category_remapping = {
@@ -265,16 +290,7 @@ class Post:
             url = self.attachment[attachment_type][attachment_id]['url']
             return make_image_md(url)
         elif attachment_type == 'video':
-            media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
-            thumb_path = f'/assets/videos/weverse_{attachment_id}-thumb.jpg'
-            md = f"""
-<figure markdown="1">
-<video controls="controls" preload="none" poster="{thumb_path}">
-<source src="{media_path}#t=1" type="video/mp4">
-Your browser does not support the video tag.
-</video>
-</figure>"""
-            return md
+            return self.make_video_md(attachment_id)
         elif attachment_type == 'snippet':
             url = self.attachment[attachment_type][attachment_id]['url']
             embed_url = url
@@ -296,6 +312,26 @@ Your browser does not support the video tag.
                 """)
 
         return f'{attachment_type}:{attachment_id}'
+
+
+    def make_video_md(self, attachment_id):
+        if youtubeVideoId := video_redirects.get(attachment_id):
+            return make_iframe_md(f'https://www.youtube.com/embed/{youtubeVideoId}')
+        else:
+            media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
+            if not os.path.exists(media_path):
+                print('MISSING ', media_path, self.shareUrl)
+                # breakpoint()
+
+            thumb_path = f'/assets/videos/weverse_{attachment_id}-thumb.jpg'
+            return dedent(f"""
+            <figure markdown="1">
+            <video controls="controls" preload="none" poster="{thumb_path}">
+            <source src="{media_path}#t=1" type="video/mp4">
+            Your browser does not support the video tag.
+            </video>
+            </figure>""")
+
 
     def split_body(self):
         pattern = r"(<w:.*?>.*?<\/.*?>)"
@@ -324,7 +360,7 @@ Your browser does not support the video tag.
             content = make_image_md(photo['url'])
 
         if video := ext.get('video'):
-            content = make_video_md(video['videoId'])
+            content = self.make_video_md(video['videoId'])
 
         if backgroundImage := ext.get('backgroundImageUrl'):
             content = make_image_md(backgroundImage)
@@ -476,7 +512,7 @@ def process_comment(comment):
 
     artist_md = f'''<div class="comment" markdown="1">
 <div class='id-container' markdown="1">
-![]({pfp}){{ pfp loading=lazy }}
+![]({pfp}){{ loading=lazy }}
 **{name_md}** <small>{date_to_str(comment.createdAt)}</small><br>
 </div>
 <div class='comment-body' markdown="1">
@@ -692,9 +728,9 @@ def gather_comments(comment_data, post_database):
             c.replies = sorted(c.replies, key=lambda c: c.createdAt)
 
 
-def make_post_database(data):
+def make_post_database(data, comment_data = None):
     post_database = gather_posts(data)
-    gather_comments(get_comment_data(), post_database)
+    gather_comments(get_comment_data() if not comment_data else comment_data, post_database)
     return post_database
 
 
@@ -717,9 +753,9 @@ def gather_posts(data):
     return posts
 
 
-def make_authors(post_database):
+def make_authors(sorted_posts):
     authors = set()
-    for k, post in post_database.items():
+    for post in sorted_posts:
         for m in get_members(post):
             authors.add(m)
 
@@ -739,7 +775,7 @@ def make_authors(post_database):
         text += f'''  {author.memberId}:
     name: '{name}'
     description: ''
-    avatar: {author.profileImageUrl}
+    avatar: {author.profileImageUrl + '?type=s72'}
 '''
 
     out_file = f'''authors:

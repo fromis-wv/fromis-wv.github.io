@@ -38,25 +38,7 @@ extra_javascript:
   - javascripts/extra.js
 nav:
   - index.md
-  - Artists Profile:
-      - wv-moments/index.md
-      - Saerom:
-        - wv-moments/saerom/moments.md
-      - Hayoung:
-        - wv-moments/hayoung/moments.md
-      - Jisun:
-        - wv-moments/jisun/moments.md
-      - Jiwon:
-        - wv-moments/jiwon/moments.md
-      - Seoyeon:
-        - wv-moments/seoyeon/moments.md
-      - Chaeyoung:
-        - wv-moments/chaeyoung/moments.md
-      - Nagyung:
-        - wv-moments/nagyung/moments.md
-      - Jiheon:
-        - wv-moments/jiheon/moments.md
-  - Weverse Posts:
+  - All Posts:
       - wv-posts/index.md
 plugins:
   - blog:
@@ -66,4 +48,7 @@ plugins:
       blog_toc: True
       post_readtime: false
       post_date_format: MMMM d, Y hh:mm
-  - tags
+      post_url_format: "{slug}"
+      archive: false
+  - tags:
+      tags_file: wv-posts/tags.md

@@ -1,3 +1,4 @@
+import os
 import textwrap
 from textwrap import dedent
 
@@ -67,14 +68,12 @@ def make_post(post):
     return out
 
 
-def make_member_markdown_file(member, data):
+def make_member_markdown_file(member, title, post_database, file_path):
     print(f'making file for {member}')
     # for post in data:
         # print(post['postId'])
 
     post_mds = []
-
-    post_database = wv_helper.make_post_database(data)
 
     sorted_posts = sorted(post_database.values(), key=lambda p: p.publishedAt)
     for p in sorted_posts:
@@ -89,26 +88,45 @@ def make_member_markdown_file(member, data):
     </div>
     """)
 
-    out_file = dedent(f"""# Moments
+    out_file = dedent(f"""# {title}
     {author_md}
     {body}
     """)
 
-    out_file_path = f'docs/wv-moments/{member.lower()}/moments.md'
-    with open(out_file_path, mode='w', encoding='utf-8') as txt:
+    with open(file_path, mode='w', encoding='utf-8') as txt:
         txt.writelines(out_file)  # print(len(out_file), len(out_file.split('\n')))
     # print(data)
 
 
 def main():
-    members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
-    members = ['Hayoung']
+    # members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
+    members = ['Jisun']
+
+    comment_data = wv_helper.get_comment_data()
+
+    artist_post_data = wv_helper.get_post_data([f'raw/post-data/real_artist_posts.json'])
+    all_artist_post_database = wv_helper.make_post_database(artist_post_data, comment_data)
+
     for member_name in members:
-        data = wv_helper.get_post_data([f'raw/post-data/moments/{member_name.lower()}.json'])
-        if len(data) == 0:
+        if not os.path.exists(f'docs/wv-moments/{member_name.lower()}'):
+            os.mkdir(f'docs/wv-moments/{member_name.lower()}')
+
+        moment_data = wv_helper.get_post_data([f'raw/post-data/moments/{member_name.lower()}.json'])
+        if len(moment_data) == 0:
             continue
 
-        make_member_markdown_file(member_name, data)
+        moment_filepath = f'docs/wv-moments/{member_name.lower()}/moments.md'
+        moment_database = wv_helper.make_post_database(moment_data, comment_data)
+        make_member_markdown_file(member_name, "Moments", moment_database, moment_filepath)
+
+        def filter_name(elem):
+            return elem[1].author.memberId == wv_helper.members_ids[member_name.lower()]
+
+        # filter_name = lambda elem: elem[1].author.profileName == wv_helper.members_ids[member_name.lower()]
+        artist_post_filepath = f'docs/wv-moments/{member_name.lower()}/artist-posts.md'
+        artist_post_database = dict(filter(filter_name, all_artist_post_database.items()))
+        # print(member_name, len(artist_post_database))
+        make_member_markdown_file(member_name, "Artist Posts", artist_post_database, artist_post_filepath)
 
 
 if __name__ == '__main__':

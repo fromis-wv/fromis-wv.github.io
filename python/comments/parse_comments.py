@@ -2,6 +2,7 @@ import datetime
 import json
 import datetime
 import os
+import random
 import re
 import shutil
 import textwrap
@@ -84,7 +85,7 @@ def process_comment(comment: Comment):
 
     artist_md = f'''<div class="comment" markdown="1">
 <div class='id-container' markdown="1">
-![]({pfp}){{ pfp loading=lazy }}
+![]({pfp}){{ loading=lazy }}
 **{name_md}** <small>{date_to_str(comment.createdAt)}</small><br>
 </div>
 <div class='comment-body' markdown="1">
@@ -164,9 +165,12 @@ def make_post(post):
     ## {author_md}
 
     out = f"""---
+slug: {post.postId}
 date: {post.publishedAt}
 authors:
 {member_authors}{categories_md}
+tags:
+  - {post.get_tag_type()}
 ---
 
 # {post_id}
@@ -272,8 +276,19 @@ def gather_posts(data):
 
 def filter_posts(posts):
     out_posts = []
+    random.shuffle(posts)
     for p in posts:
-        # if not p.has_attachment('snippet'):
+        # if not p.has_attachment('video'):
+        #     continue
+        # if not p.author.memberId == wv_helper.members_ids['jisun']:
+        #     continue
+
+        # found = False
+        # for id, _ in p.attachment['video'].items():
+        #     if id in wv_helper.video_redirects:
+        #         print(id)
+        #         found = True
+        # if not found:
         #     continue
 
         types = {
@@ -281,7 +296,7 @@ def filter_posts(posts):
             # POSTTYPE_YOUTUBE,
             # POSTTYPE_VIDEO,
             # POSTTYPE_IMAGE
-            POSTTYPE_MOMENT
+            # POSTTYPE_MOMENT
         }
 
         # TODO: INSERT POSTTYPE_YOUTUBE
@@ -289,8 +304,8 @@ def filter_posts(posts):
             out_posts.append(p)
             print(p.json_data)
 
-        # if len(out_posts) > 50:
-        #     break
+        if len(out_posts) > 50:
+            break
     print(f'Filtered {len(out_posts)} media')
     return out_posts
 
@@ -299,68 +314,25 @@ def get_comment_data():
         json_data = json.load(file)
         return json_data
 
-def make_authors():
-    authors = set()
-    for k, post in post_database.items():
-        for m in post.get_members():
-            authors.add(m)
-
-        if post.author not in authors:
-            authors.add(post.author)
-
-    missing_thumb = []
-    for author in authors:
-        ext = wv_helper.get_ext(author.profileImageUrl.removesuffix(','))
-        if not os.path.exists(f'raw/authors/{author.memberId}.{ext}'):
-            missing_thumb.append(author)
-
-    for i, author in enumerate(missing_thumb):
-        print(i, '/', len(missing_thumb), author.profileImageUrl)
-
-        expected_ext = {'png', 'jpg', 'jpeg'}
-        ext = wv_helper.get_ext(author.profileImageUrl.removesuffix(','))
-        if ext not in expected_ext:
-            print(author.profileImageUrl)
-            breakpoint()
-        file_name = f'raw/authors/{author.memberId}.{ext}'
-        wv_helper.download_img(author.profileImageUrl, file_name)
-
-    text = ''
-    for i, author in enumerate(authors):
-        name = str(author.profileName).replace('\x81', '').replace('\x8d', '').replace("'", '')
-        if len(name) == 0:
-            name = '(Error emojis)'
-
-        text += f'''  {author.memberId}:
-    name: '{name}'
-    description: ''
-    avatar: {author.profileImageUrl}
-'''
-
-    out_file = f'''authors:
-{text}
-'''
-    with open(f'{base_dir}/.authors.yml', mode='w', encoding='utf-8') as txt:
-        txt.writelines(out_file)
-
 def verify_posts(posts):
     for p in posts:
         if p.has_attachment('video'):
             for k, v in p.attachment['video'].items():
                 media_path = f'/assets/videos/weverse_{k}.mp4'
                 if not os.path.exists(media_path):
-                    print('Missing video ', k)
+                    print('Missing video ', k, p.shareUrl)
 
 def main():
-    # members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
-    # members = ['Saerom']
-
+    members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
     # test = False
 
     all_comment_data = []
-    # clear_posts()
+    clear_posts()
 
     files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
+    for member in members:
+        files.append(f'raw/post-data/moments/{member.lower()}.json')
+
     all_post_data = wv_helper.get_post_data(files)
 
     global post_database
@@ -378,13 +350,13 @@ def main():
 
     sorted_posts = sorted(post_database.values(), key=lambda p: p.publishedAt)
 
-    # make_authors()
+    wv_helper.make_authors(sorted_posts)
 
-    sorted_posts = filter_posts(sorted_posts)
+    # sorted_posts = filter_posts(sorted_posts)
 
-    verify_posts(sorted_posts)
+    # verify_posts(sorted_posts)
 
-    make_markdown(sorted_posts)
+    # make_markdown(sorted_posts)
 
 
 if __name__ == '__main__':
