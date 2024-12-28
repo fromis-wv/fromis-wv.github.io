@@ -178,6 +178,9 @@ def process_attachments(attachments):
 
 def print_all_posts():
     files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
+    members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
+    for member in members:
+        files.append(f'raw/post-data/moments/{member.lower()}.json')
     full_data = get_data_from_files(files)
 
     attachment_types = set()
