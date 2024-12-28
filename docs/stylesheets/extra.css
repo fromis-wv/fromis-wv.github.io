@@ -63,6 +63,35 @@
     border-radius: 8px; /* Add rounded corners */
 }
 
+.home-link
+{
+    justify-content: center;
+    align-content: center;
+    display: flex;
+    gap: 48px;
+}
+
+.home-link img
+{
+    max-height: 400px;
+    display: block;
+    border-radius: 60px; /* Add rounded corners */
+    box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.4); /* Add a subtle shadow */
+    transition: transform 0.1s ease; /* Smooth transition */
+}
+
+.home-link img:hover
+{
+    transform: scale(1.025);
+}
+
+.home-link figcaption
+{
+    font-weight: bold;
+    font-style: normal;
+    font-size: 25pt
+}
+
 .id-container
 {
     align-items: center;
