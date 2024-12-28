@@ -109,7 +109,8 @@ def patch_generate_categories(self, config: MkDocsConfig, files: Files):
         for author_cat in post.config.categories:
             name = f'Comments'
             path = self._format_path_for_category(f'{author_cat} {name}')
-            yield from make_file(name, post, self, files, path, config, CustomView, author_cat)
+            if author_cat in members_ids.keys():
+                yield from make_file(name, post, self, files, path, config, CustomView, author_cat)
 
         for author_name, author_id in members_ids.items():
             # print(post.meta)
