@@ -44,7 +44,7 @@ plugins:
   - blog:
       blog_dir: wv-posts
       pagination: True
-      pagination_per_page: 15
+      pagination_per_page: 25
       blog_toc: True
       post_readtime: false
       post_date_format: MMMM d, Y hh:mm
