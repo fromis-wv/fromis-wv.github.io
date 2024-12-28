@@ -315,19 +315,43 @@ def get_comment_data():
         return json_data
 
 def verify_posts(posts):
+    missing = set()
+    asset_miss = set()
+    moments_miss = set()
+    all = set()
+    all_moments = set()
     for p in posts:
+        if moment_ext := p.get_moment_ext():
+            if video := moment_ext.get('video'):
+                k = video['videoId']
+                path = f'docs/assets/videos/weverse_{k}.mp4'
+                all_moments.add(k)
+                if not os.path.exists(path) and not k in wv_helper.video_redirects:
+                    moments_miss.add(k)
+
         if p.has_attachment('video'):
             for k, v in p.attachment['video'].items():
-                media_path = f'/assets/videos/weverse_{k}.mp4'
-                if not os.path.exists(media_path):
-                    print('Missing video ', k, p.shareUrl)
+                media_path = f'raw/post-media/videos/weverse_{k}.mp4'
+                all.add(k)
+                if not os.path.exists(media_path) and not k in wv_helper.video_redirects:
+                    # print('Missing video ', k, p.shareUrl)
+                    missing.add(p.shareUrl.rsplit('/')[-1])
+
+                assets_path = f'docs/assets/videos/weverse_{k}.mp4'
+                if not os.path.exists(assets_path) and not k in wv_helper.video_redirects:
+                    # print('Missing video ', k, p.shareUrl)
+                    asset_miss.add(p.shareUrl.rsplit('/')[-1])
+
+                    # breakpoint()
+    print('Found all: ', len(all), 'missing: ', len(missing), 'assets missing: ', len(asset_miss), 'moments:', len(moments_miss), '/', len(all_moments))
+    # print(missing)
 
 def main():
     members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
     # test = False
 
     all_comment_data = []
-    clear_posts()
+    # clear_posts()
 
     files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
     for member in members:

@@ -3,6 +3,7 @@ import os
 import subprocess
 import shutil
 
+from python import wv_helper
 
 DATE_ID = 'date'
 TIME_ID = 'time'
@@ -41,7 +42,12 @@ def convert_image(root, image):
     print('Process image', in_path)
     pass
 
-def generate_thumbnail(root, video, is_video):
+def process_video(root, video, is_video):
+    id = video.removesuffix('.mp4').removeprefix('weverse_')
+    if id in wv_helper.video_redirects:
+        print(id)
+        return
+    return
 
     in_path = f'{root}/{video}'
     out_thumb = f'{output_folder}/{video.removesuffix('.mp4')}-thumb.jpg'
@@ -125,7 +131,7 @@ def run_folder(new_source, new_output):
                     convert_image(root, f)
             elif f.endswith('.mp4'):
                 print(in_path)
-                generate_thumbnail(root, f, True)
+                process_video(root, f, True)
             elif f.endswith('.gif'):
                 if not skip_images:
                     print(in_path)
@@ -148,5 +154,5 @@ if __name__ == '__main__':
     #     source_folder = f'raw/{member_name}/posts'
     #     output_folder = f'docs/media/{member_name}/posts'
     #     run_folder(source_folder, output_folder)
-    # run_folder('raw/post-media/videos', 'docs/assets/videos')
-    run_folder('raw/moments-media', 'docs/assets/videos')
+    run_folder('raw/post-media/videos', 'docs/assets/videos')
+    # run_folder('raw/moments-media', 'docs/assets/videos')
