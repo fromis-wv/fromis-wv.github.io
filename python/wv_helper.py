@@ -42,15 +42,27 @@ video_redirects = {
 }
 
 members_ids = {
-    'jiheon': '5fb309bc7489a576484431ba8338807e',  # jh
+    'saerom': '326c0d1e7045798aa3964e2028c34628',  # sr
     'hayoung': '67b4c6fb2220ac6705aa97046f3503a1',  # hy
-    'chaeyoung': '65eff6ab044ae8dea6816794f11a6fc1',  # cy
+    'gyuri': 'db56036fc59a94a9ef617261c90c783f',  # gr
     'jiwon': '6599dbbcaa26237c2ab0f3becb421b45',  # jw
     'jisun': '01435f74a49ba8a519705ad242348232',  # js
-    'saerom': '326c0d1e7045798aa3964e2028c34628',  # sr
     'seoyeon': '56bdfafb606d9ce1b4ecdd572595e242',  # sy
+    'chaeyoung': '65eff6ab044ae8dea6816794f11a6fc1',  # cy
     'nagyung': '5477d46be848bd40252f9d13ef62cb4d',  # ng
-    'gyuri': 'db56036fc59a94a9ef617261c90c783f'  # gr
+    'jiheon': '5fb309bc7489a576484431ba8338807e',  # jh
+}
+
+members_order = {
+    '326c0d1e7045798aa3964e2028c34628': 0,  # sr
+    '67b4c6fb2220ac6705aa97046f3503a1': 1,
+    'db56036fc59a94a9ef617261c90c783f': 2,
+    '6599dbbcaa26237c2ab0f3becb421b45': 3,
+    '01435f74a49ba8a519705ad242348232': 4,
+    '56bdfafb606d9ce1b4ecdd572595e242': 5,
+    '65eff6ab044ae8dea6816794f11a6fc1': 6,
+    '5477d46be848bd40252f9d13ef62cb4d': 7,
+    '5fb309bc7489a576484431ba8338807e': 8
 }
 
 def remove_emojis(data):
@@ -246,8 +258,23 @@ class Post:
             "하영": "Hayoung",
         }
 
+        category_order = {
+            "Saerom": 0,
+            "Hayoung": 1,
+            "Gyuri": 2,
+            "Jiwon": 3,
+            "Jisun": 4,
+            "Seoyeon": 5,
+            "Chaeyoung": 6,
+            "Nagyung": 7,
+            "Jiheon": 8,
+        }
+
+        def get_order(m):
+            return category_order[m] if m in category_order else 100
+
         categories += [category_remapping.get(m.profileName) if m.profileName in category_remapping else m.profileName for m in get_members(self)]
-        return categories
+        return sorted(categories, key=get_order)
 
     def has_attachment(self, type):
         for k, v in self.attachment.items():
@@ -559,7 +586,10 @@ def get_members(post):
     if post.author.hasOfficialMark:
         members.add(post.author)
 
-    return members
+    def get_member_order(auth: Author):
+        return members_order[auth.memberId] if auth.memberId in members_order else 100
+
+    return sorted(members, key=get_member_order)
 
 
 def get_authors(post):
@@ -685,7 +715,7 @@ def make_markdown(posts):
 
 
 def get_comment_data():
-    with open('raw/post-data/all_comments.json', 'r', encoding='utf-8') as file:
+    with open('raw/post-data/combined_all_comments.json', 'r', encoding='utf-8') as file:
         json_data = json.load(file)
         return json_data
 

@@ -31,37 +31,6 @@ PARENT_TYPE_COMMENT = 'COMMENT'
 
 post_database = dict()
 
-def get_datetime(timestamp):
-    time = int(timestamp) / 1000
-    return datetime.datetime.fromtimestamp(time, tz=ZoneInfo("Asia/Seoul"))
-
-def make_image_md(url, caption='', zoom_click=True, figure=True):
-    if caption:
-        caption = f'<figcaption>{caption}</figcaption>'
-
-    zoom_md = 'onclick="openFullscreen(this)' if zoom_click else ''
-
-    if figure:
-        return textwrap.dedent(f"""\
-                            <figure markdown="1">
-                            ![]({url}){{ loading=lazy {zoom_md}"}}{caption}
-                            </figure>""")
-    else:
-        return textwrap.dedent(f'![]({url}){{ loading=lazy {zoom_md}"}}{caption}')
-
-def make_iframe_md(embed_url, display_url):
-    return textwrap.dedent(f"""\
-    <figure class="snippet" markdown="1">
-    <iframe src="{embed_url}"></iframe>
-    <figcaption><a href="{display_url}">{display_url}</a></figcaption>
-    </figure>""")
-
-def date_to_str(date, sorted=False):
-    if sorted:
-        return date.strftime("%Y-%m-%d %H-%M")
-    else:
-        return date.strftime("%b %d %Y, %H:%M")
-
 def replace_links(text):
     pattern = r"(https?://[^\s]+)"
     replacement = r'<a href="\1">\1</a>'
@@ -86,7 +55,7 @@ def process_comment(comment: Comment):
     artist_md = f'''<div class="comment" markdown="1">
 <div class='id-container' markdown="1">
 ![]({pfp}){{ loading=lazy }}
-**{name_md}** <small>{date_to_str(comment.createdAt)}</small><br>
+**{name_md}** <small>{wv_helper.date_to_str(comment.createdAt)}</small><br>
 </div>
 <div class='comment-body' markdown="1">
 {comment.body}
@@ -150,14 +119,14 @@ def make_post(post):
 
         head = textwrap.dedent(f"""\
 <a href="{post.shareUrl}">
-{make_image_md(url, caption, False)}
+{wv_helper.make_image_md(url, caption, False)}
 </a>""")
 
     author_md = f'''
 <div class='id-container' markdown="1">
 ![]({pfp}){{ pfp loading=lazy }}
 <div markdown="1">
-**{name_md}** <small>{date_to_str(post.publishedAt)}</small><br>
+**{name_md}** <small>{wv_helper.date_to_str(post.publishedAt)}</small><br>
 </div>
 </div>'''
 
@@ -215,65 +184,6 @@ def make_markdown(posts):
             txt.writelines(out_file)
             # print(len(out_file), len(out_file.split('\n')))
 
-def gather_comments(data):
-    all_comments = dict()
-
-    for comment_data in data:
-        root = comment_data['root']['data']
-        post_id = root['postId']
-
-        comment =   Comment(comment_data)
-
-        if comment.commentId in all_comments:
-            # print(comment_data)
-            continue
-            # breakpoint()
-
-        all_comments[comment.commentId] = comment
-
-        main_comment = comment
-
-        if comment_data['parent']['type'] == 'COMMENT':
-            parent_id = comment_data['parent']['data']['commentId']
-            if parent_id in all_comments:
-                parent_comment = all_comments[parent_id]
-            else:
-                parent_comment = Comment(comment_data['parent']['data'])
-                all_comments[parent_comment.commentId] = parent_comment
-
-            parent_comment.replies.append(comment)
-            main_comment = parent_comment
-
-        if post_id in post_database:
-            post_database[post_id].comments.add(main_comment)
-        else:
-            print('FAILED TO FIND', post_id)
-
-    for k, post in post_database.items():
-        post.comments = sorted(post.comments, key=lambda c: c.createdAt)
-
-        for c in post.comments:
-            c.replies = sorted(c.replies, key=lambda c: c.createdAt)
-
-
-def gather_posts(data):
-    posts = dict()
-
-    for post_data in data:
-        if post_data.get('errorCode'):
-            continue
-
-        post_id = post_data['postId']
-
-        if post_id in posts:
-            continue
-
-        posts[post_id] = Post(post_data)
-
-    print(f'Num posts: {len(posts)}')
-
-    return posts
-
 def filter_posts(posts):
     out_posts = []
     random.shuffle(posts)
@@ -309,10 +219,6 @@ def filter_posts(posts):
     print(f'Filtered {len(out_posts)} media')
     return out_posts
 
-def get_comment_data():
-    with open('raw/post-data/combined_all_comments.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
-        return json_data
 
 def verify_posts(posts):
     missing = set()
@@ -351,7 +257,7 @@ def main():
     # test = False
 
     all_comment_data = []
-    # clear_posts()
+    clear_posts()
 
     # files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
     files = ['raw/post-data/combined_real_artist_posts.json', 'raw/post-data/combined_all_comment_posts.json', 'raw/post-data/missing.json']
@@ -361,17 +267,16 @@ def main():
     all_post_data = wv_helper.get_post_data(files)
 
     global post_database
-    post_database = gather_posts(all_post_data)
+    post_database = wv_helper.gather_posts(all_post_data)
 
-    gather_comments(get_comment_data())
+    wv_helper.gather_comments(wv_helper.get_comment_data(), post_database)
 
     for k, post in post_database.items():
         # print(k, post)
-        for comment in post.comments:
+        # for comment in post.comments:
             # print('\t', comment.commentId)
-
-            if len(post.comments) != len(set(post.comments)):
-                breakpoint()
+        if len(post.comments) != len(set(post.comments)):
+            breakpoint()
 
     sorted_posts = sorted(post_database.values(), key=lambda p: p.publishedAt)
 

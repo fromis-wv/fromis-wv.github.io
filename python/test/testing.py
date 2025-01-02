@@ -161,8 +161,8 @@ def write_all_requests(req, initial_req, filename, use_after, skip_exists=False)
             break
         # if not paging.get('after'):
         #     break
-
-        time.sleep(30)
+        print('waiting...')
+        time.sleep(20)
 
         # count += 1
         # if count > 5:
@@ -274,7 +274,6 @@ def write_all_live_comments():
 'https://global.apis.naver.com/weverse/wevweb/dm/v1.1/media-box?limit=20&prev=172595359037600&roomId=233441&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735630237384&wmd=jF4mxZb7Cs6Y%2B6XATHg4hj6Y%2Fdc%3D'
 
 def main():
-    # req = '/media/v1.0/community-36/searchAllMedia'
     # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
     # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
 
@@ -293,10 +292,16 @@ def main():
     #     req = f'/dm/v1.1/rooms/{room}/messages'
     #     write_single(req, f'raw/{name}-latest', False)
 
-    # write_all_requests(req, req, 'raw/post-data/searchAllMedia', True)
+    # '/media/v1.0/community-36/searchAllMedia?after=1720173600000%2C1720147929957&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postsV1&gcc=AU&language=en&os=WEB&platform=WEB&sortOrder=DESC&wpf=pc&wmsgpad=1735787794579&wmd=o0I6yvUTRjWDRCR%2BwswJz2VKNR8%3D'
+
+    # '/media/v1.0/community-36/searchAllMedia?after=1735657200021%2C1734936949187'
+
+    req = '/media/v1.0/community-36/searchAllMedia?fieldSet=postsV1'
+    write_all_requests(req, req, 'raw/post-data/new_searchAllMedia', True)
+
     # write_all_post_media()
     # write_all_live_comments()
-    write_all_lives()
+    # write_all_lives()
 
     'https://global.apis.naver.com/weverse/wevweb/post/v1.0/member-5fb309bc7489a576484431ba8338807e/posts?after=1698763879873%2C27023472&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postV1&filterType=MOMENT_VIEWER&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178426948&wmd=xVsr5ooMlAolx3fADGZQguc2CzY%3D'
 
