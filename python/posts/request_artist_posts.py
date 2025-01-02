@@ -64,11 +64,24 @@ def main():
 
     extr = make_extractor()
 
+    post_ids = set()
+    json_data = []
+    with open('raw/post-data/IGNORE_all_artist_posts.json', 'r') as file:
+        # Write the array as JSON
+        json_data = json.load(file)
+        for d in json_data:
+            post_ids.add(d['postId'])
+        # print(json_data[0])
+        # breakpoint()
+
+
     # req = '/comment/v1.0/member-6aa813460d109e841afc9ac410f25226/comments?fieldSet=memberCommentsV1&sortType=LATEST&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4'
 
     req = '/comment/v1.0/member-db56036fc59a94a9ef617261c90c783f/comments?fieldSet=memberCommentsV1&sortType=LATEST'
 
     out_data = []
+
+    filtered_data = []
 
     count = 0
     next_page = None
@@ -78,15 +91,24 @@ def main():
         if not next_page:
             break
 
+        for data in out_data:
+            if data['postId'] in post_ids:
+                break
+            filtered_data.append(data)
+            print(filtered_data)
+
+        break
+
         time.sleep(.5)
 
         # count += 1
         # if count > 5:
         #     break
 
-    with open('all_artist_posts.json', 'w') as file:
+    with open('new_bad_artist_posts.json', 'w') as file:
         # Write the array as JSON
-        json.dump(out_data, file)
+        print(len(filtered_data))
+        json.dump(filtered_data, file)
 
     '"after": "1726690555959,31862"'
 
@@ -144,7 +166,7 @@ def download_real_posts():
     all_posts = []
     extr = make_extractor()
 
-    with open('all_artist_posts.json', 'r', encoding='utf-8') as file:
+    with open('new_bad_artist_posts.json', 'r', encoding='utf-8') as file:
         # print('Loading json')
         json_data = json.load(file)
 
@@ -155,7 +177,7 @@ def download_real_posts():
             all_posts.append(read_post(extr, post_id))
             time.sleep(.5)
 
-    with open('real_artist_posts.json', 'w') as file:
+    with open('new_real_artist_posts.json', 'w') as file:
         # Write the array as JSON
         json.dump(all_posts, file)
 
@@ -184,11 +206,23 @@ def print_locked():
         print(d)
 
 def download_comments():
+
+    message_ids = set()
+    with open('raw/post-data/all_comments.json', 'r') as file:
+        # Write the array as JSON
+        json_data = json.load(file)
+        for d in json_data:
+            print(d['commentId'])
+            message_ids.add(d['commentId'])
+        # breakpoint()
+
+    # return
     extr = make_extractor()
 
     # req = '/comment/v1.0/member-6aa813460d109e841afc9ac410f25226/comments?fieldSet=memberCommentsV1&sortType=LATEST&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4'
 
-    out_data = []
+
+    filtered_data = []
 
     members = [
         '5fb309bc7489a576484431ba8338807e', # jh
@@ -207,28 +241,40 @@ def download_comments():
 
         count = 0
 
+        out_data = []
+
         next_page = None
-        while True:
+        exit = False
+        while not exit:
             next_page = run_extr(extr, req, next_page, out_data)
             if not next_page:
                 break
 
             time.sleep(.5)
 
+            for d in out_data:
+                print(d)
+                if d['commentId'] not in message_ids:
+                    filtered_data.append(d)
+                else:
+                    exit = True
+                    break
+
             # count += 1
             # if count > 3:
             #     break
 
-    with open('all_comments.json', 'w') as file:
+    with open('new_all_comments.json', 'w') as file:
         # Write the array as JSON
-        json.dump(out_data, file)
+        print('New comments', len(filtered_data))
+        json.dump(filtered_data, file)
 
 def download_comment_posts():
     all_posts = []
     failed_posts = []
     extr = make_extractor()
 
-    with open('all_comments.json', 'r', encoding='utf-8') as file:
+    with open('new_all_comments.json', 'r', encoding='utf-8') as file:
         # print('Loading json')
         json_data = json.load(file)
 
@@ -256,7 +302,7 @@ def download_comment_posts():
         time.sleep(0.5)
         # print(p)
 
-    with open('all_comment_posts.json', 'w') as file:
+    with open('new_all_comment_posts.json', 'w') as file:
         # Write the array as JSON
         json.dump(all_posts, file)
 
@@ -327,13 +373,34 @@ def download_missing_posts():
         # Write the array as JSON
         json.dump(all_posts, file)
 
-download_missing_posts()
+def merge_jsons(filename):
+
+    total = []
+
+    with open(f'raw/post-data/{filename}', 'r') as file:
+        old_data = json.load(file)
+        print('old', len(old_data))
+        total += old_data
+
+    with open(f'raw/post-data/new_{filename}', 'r') as file:
+        new_data = json.load(file)
+        print('new', len(new_data))
+        total += new_data
+
+    with open(f'combined_{filename}', 'w') as file:
+        # Write the array as JSON
+        print('total', len(total))
+        json.dump(total, file)
+
+# download_missing_posts()
 # print_all_posts()
 # download_comment_posts()
 # download_comments()
 # print_locked()
 # download_real_posts()
 # main()
+
+merge_jsons('all_comments.json')
 
 
 # https://global.apis.naver.com/weverse/wevweb/post/v1.0/community-36/artistTabPosts?fieldSet=postsV1&limit=20&pagingType=CURSOR&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1734592145141&wmd=y3YfiX4ZKNmoQWvel42uacVdFSQ%3D

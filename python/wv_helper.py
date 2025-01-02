@@ -277,7 +277,7 @@ class Post:
 
         attachment_type = info['type']
         attachment_id = info['id']
-        print('Processing ', attachment_type, attachment_id)
+        # print('Processing ', attachment_type, attachment_id)
 
         # attachment_inner = info['inner']
 
@@ -300,7 +300,7 @@ class Post:
             if 'youtube' in url:
                 embed_url = url.replace('watch?v=', 'embed/')
                 embed_url = embed_url.replace('shorts', 'embed')
-                print('EMBED', embed_url)
+                # print('EMBED', embed_url)
             else:
                 return f'<figure class="snippet" markdown="1">\n{link_md}\n</figure>'
 
@@ -319,7 +319,7 @@ class Post:
             return make_iframe_md(f'https://www.youtube.com/embed/{youtubeVideoId}')
         else:
             media_path = f'/assets/videos/weverse_{attachment_id}.mp4'
-            if not os.path.exists(media_path):
+            if not os.path.exists(f'docs/{media_path}'):
                 print('MISSING ', media_path, self.shareUrl)
                 # breakpoint()
 
@@ -387,8 +387,8 @@ class Post:
         # pattern = r'<(.*?)\s*/>'
         # split_body = [self.process_attachment(s) for s in re.split(pattern, self.body) if s.strip()]
         split_body = [self.process_attachment(s) for s in self.split_body()]
-        if len(split_body) > 1:
-            print(split_body)
+        # if len(split_body) > 1:
+        #     print(split_body)
         return '\n'.join(split_body)
 
     def process_extensions(self):
@@ -722,10 +722,10 @@ def gather_comments(comment_data, post_database):
             post_database[post_id].comments.add(main_comment)  # else:  #     print('FAILED TO FIND', post_id)
 
     for k, post in post_database.items():
-        post.comments = sorted(post.comments, key=lambda c: c.createdAt)
+        post.comments = sorted(post.comments, key=lambda c: (c.createdAt, c.author.memberId))
 
         for c in post.comments:
-            c.replies = sorted(c.replies, key=lambda c: c.createdAt)
+            c.replies = sorted(c.replies, key=lambda c: (c.createdAt, c.author.memberId))
 
 
 def make_post_database(data, comment_data = None):
@@ -766,6 +766,12 @@ def make_authors(sorted_posts):
     # for author in authors.values():
     #     if author.hasOfficialMark:
     #         print(author.profileName)
+
+    def auth_id(a:Author):
+        return a.memberId
+
+    authors = sorted(list(authors), key=auth_id)
+
     for author in authors:
         name = str(author.profileName).replace('\x81', '').replace('\x8d', '').replace("'", '')
         # name = remove_emojis(name)

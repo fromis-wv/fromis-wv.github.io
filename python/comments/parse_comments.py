@@ -302,7 +302,7 @@ def filter_posts(posts):
         # TODO: INSERT POSTTYPE_YOUTUBE
         if len(types) == 0 or p.postType in types:
             out_posts.append(p)
-            print(p.json_data)
+            # print(p.json_data)
 
         if len(out_posts) > 50:
             break
@@ -310,7 +310,7 @@ def filter_posts(posts):
     return out_posts
 
 def get_comment_data():
-    with open('raw/post-data/all_comments.json', 'r', encoding='utf-8') as file:
+    with open('raw/post-data/combined_all_comments.json', 'r', encoding='utf-8') as file:
         json_data = json.load(file)
         return json_data
 
@@ -353,7 +353,8 @@ def main():
     all_comment_data = []
     # clear_posts()
 
-    files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
+    # files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
+    files = ['raw/post-data/combined_real_artist_posts.json', 'raw/post-data/combined_all_comment_posts.json', 'raw/post-data/missing.json']
     for member in members:
         files.append(f'raw/post-data/moments/{member.lower()}.json')
 

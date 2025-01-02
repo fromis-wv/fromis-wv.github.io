@@ -19,7 +19,9 @@ skip_duplicate = True
 skip_images = True
 
 copy_image = False
-copy_video = True
+copy_video = False
+
+simulate = False
 
 source_folder = ''
 output_folder = ''
@@ -30,11 +32,15 @@ def convert_image(root, image):
     in_path = f'{root}/{image}'
     out_path = f'{output_folder}/{image}'
 
-    if copy_image:
-        make_copy(in_path, out_path)
+    if skip_duplicate and os.path.exists(out_path):
         return
 
-    if skip_duplicate and os.path.exists(out_path):
+    if simulate:
+        print(f'Simulate image {image}')
+        return
+
+    if copy_image:
+        make_copy(in_path, out_path)
         return
 
     cmd = f'magick {in_path} -resize 1920x1080 -quality 80 {out_path}'
@@ -47,13 +53,17 @@ def process_video(root, video, is_video):
     if id in wv_helper.video_redirects:
         print(id)
         return
-    return
 
     in_path = f'{root}/{video}'
     out_thumb = f'{output_folder}/{video.removesuffix('.mp4')}-thumb.jpg'
     out_video = f'{output_folder}/{video}'
 
     if skip_duplicate and os.path.exists(out_video):
+        print('skip exists ', out_video)
+        return
+
+    if simulate:
+        print(f'Simulate video {video}')
         return
 
     if copy_video:
@@ -96,6 +106,14 @@ def encode_video(in_path, out_path):
         # 'ffmpeg -i input.avi  scale=720:-1 -c:a copy output.mkv'
 
 def resize_gif(in_path, out_path):
+
+    if simulate:
+        print(f'Simulate gif {out_path}')
+        return
+
+    if os.path.exists(out_path):
+        return
+
     cmd = ['ffmpeg', '-y', '-i', in_path, '-vf', 'fps=15,scale=480:-2', out_path]
     # if not os.path.exists(out_path):
     # ffmpeg -i input.gif -vf "scale=320:-1" output.gif
@@ -123,21 +141,22 @@ def run_folder(new_source, new_output):
 
     for root, dirs, files in os.walk(source_folder):
         for f in files:
+            print(f)
             in_path = f'{root}/{f}'
 
             if f.endswith('.jpg') or f.endswith('.png'):
                 if not skip_images:
-                    print(in_path)
+                    # print(in_path)
                     convert_image(root, f)
             elif f.endswith('.mp4'):
-                print(in_path)
+                # print(in_path)
                 process_video(root, f, True)
             elif f.endswith('.gif'):
                 if not skip_images:
-                    print(in_path)
+                    # print(in_path)
                     out_path = f'{output_folder}/{f}'
                     # shutil.copy(in_path, out_path)
-                    print('Resize gif', in_path)
+                    # print('Resize gif', in_path)
                     # make_copy(in_path, out_path)
                     resize_gif(in_path, out_path)
             else:

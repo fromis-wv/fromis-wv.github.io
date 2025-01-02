@@ -4,3 +4,6 @@ raw/
 venv/
 yt-dlp/
 temp/
+python/test/imgur-upload.py
+docs/assets/videos/
+python/imgur-upload.py

@@ -6,6 +6,8 @@ import time
 import requests
 from requests.exceptions import ChunkedEncodingError
 
+from python import wv_helper
+
 
 def get_data_from_files(files):
     post_dict = dict()
@@ -34,14 +36,14 @@ def get_data_from_files(files):
 
 def verify_artist_posts():
     post_ids = set()
-    with open('all_artist_posts.json', 'r', encoding='utf-8') as file:
+    with open('combined_all_artist_posts.json', 'r', encoding='utf-8') as file:
         json_data = json.load(file)
         for data in json_data:
             post_ids.add(data['postId'])
 
     print(len(post_ids))
 
-    all_data = get_data_from_files(['real_artist_posts.json', 'missing.json'])
+    all_data = get_data_from_files(['combined_real_artist_posts.json', 'missing.json'])
     for data in all_data:
         if data:
             if postId := data.get('postId'):
@@ -91,29 +93,36 @@ def download_img(image_url, file_path):
     #     print(f"Failed to download image. Status code: {response.status_code}")
 
 def check_missing_videos(videos):
+
     all_videos = set()
     missing = []
     posts = dict()
 
     for post_id, elem in videos:
+
         for k, video in elem.items():
-            # print(video)
+            print(video)
             video_id = video['videoId']
+            if video_id in wv_helper.video_redirects:
+                print('skip ', video_id)
+                continue
+
             all_videos.add(video_id)
             path = f'raw/post-media/videos/weverse_{video_id}.mp4'
+            print('checking', path)
             if not os.path.exists(path):
                 missing.append(video_id)
                 posts.setdefault(post_id, [])
                 posts[post_id].append(video_id)
-                print(path)
+                print('missing ', path)
 
     # 'C:\Documents\Projects\fromis-wv.github.io\raw\post-media'
     # 'raw/post-media/videos/weverse_2-871101.mp4'
     print(len(videos), "missing ", len(missing))
     for k, ps in posts.items():
         print(k)
-        for p in ps:
-            print('\t', p)
+        # for p in ps:
+        #     print('\t', p)
 
 def get_photo_name(photo):
     photo_id = photo['photoId']
@@ -177,7 +186,7 @@ def process_attachments(attachments):
     check_missing_photos(attachments['photo'])
 
 def print_all_posts():
-    files = ['raw/post-data/real_artist_posts.json', 'raw/post-data/all_comment_posts.json', 'raw/post-data/missing.json']
+    files = ['raw/post-data/combined_real_artist_posts.json', 'raw/post-data/combined_all_comment_posts.json', 'raw/post-data/missing.json']
     members = ['Saerom', 'Hayoung', 'Jiwon', 'Jisun', 'Seoyeon', 'Chaeyoung', 'Nagyung', 'Jiheon']
     for member in members:
         files.append(f'raw/post-data/moments/{member.lower()}.json')
@@ -192,6 +201,10 @@ def print_all_posts():
     for data in full_data:
         if attachment := data.get('attachment'):
             for k, v in attachment.items():
+                if data['postId'] != '4-188898540':
+                    continue
+                    # print(v)
+
                 if k not in expected_types:
                     print("WHAT IS THIS ", k)
                     breakpoint()

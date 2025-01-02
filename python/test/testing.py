@@ -20,6 +20,20 @@ members = {
     'gyuri': 'db56036fc59a94a9ef617261c90c783f'  # gr
 }
 
+rooms = {
+    'jiheon': '414361',  # jh
+    'hayoung': '297243',  # hy
+    'chaeyoung': '329164',  # cy
+    'jiwon': '464268',  # jw
+    'jisun': '221087',  # js
+    'saerom': '321529',  # sr
+    'seoyeon': '229217',  # sy
+    'nagyung': '233441',  # ng
+}
+
+'https://global.apis.naver.com/weverse/wevweb/dm/v1.2/rooms?transLang=en&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735638300722&wmd=c1QNejzLimSM87fdUDzgxivWDzQ%3D'
+'https://global.apis.naver.com/weverse/wevweb/dm/v1.1/rooms/414361/messages?prev=1735055415627&transLang=en&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735638349356&wmd=62TdR3ZZtyXAyEpxm97z5T3wxAg%3D'
+
 params = {
     # 'verbose': True,
     'quiet': True,
@@ -96,7 +110,7 @@ def write_all_requests(req, initial_req, filename, use_after, skip_exists=False)
     prev = None
     after = None
 
-    ids = set()
+    # ids = set()
 
     initial = initial_req
 
@@ -120,9 +134,9 @@ def write_all_requests(req, initial_req, filename, use_after, skip_exists=False)
         prev = get_prev_page(data)
         after = get_next_page(data)
 
-        for d in data['data']:
-            ids.add(d['postId'])
-        print(len(ids))
+        # for d in data['data']:
+        #     ids.add(d['postId'])
+        # print(len(ids))
         # print(paging)
 
         # new_msgs = []
@@ -148,7 +162,7 @@ def write_all_requests(req, initial_req, filename, use_after, skip_exists=False)
         # if not paging.get('after'):
         #     break
 
-        time.sleep(.5)
+        time.sleep(30)
 
         # count += 1
         # if count > 5:
@@ -180,7 +194,7 @@ def write_multiple(reqs, filename, grab_data):
         except Exception as e:
             print(e)
             break
-        time.sleep(1.0)
+        time.sleep(2.0)
 
     with open(f'{filename}.json', 'w', encoding='utf-8') as file:
         # Write the array as JSON
@@ -199,7 +213,7 @@ def write_all_lives():
     # for p in posts:
     #     print(p)
     # ['/post/v1.0/post-0-152103623?fieldSet=postV1', '/post/v1.0/post-4-104688875?fieldSet=postV1']
-    write_multiple(posts, 'raw/post-data/all_live_posts', False)
+    write_multiple(posts, 'raw/post-data/new_all_live_posts', False)
 
 def write_all_post_media():
     posts = []
@@ -240,11 +254,12 @@ def write_all_live_comments():
                 break
 
     # posts = posts[:5]
-    for chatId, data in posts:
-        postId = data['postId']
-        req = f'/chat/v1.0/chat-{chatId}/artistMessages'
-        print(req, postId, data['shareUrl'])
-        write_all_requests(req, req, f'raw/post-data/liveChat/{postId}', True, True)
+    # for chatId, data in posts:
+    #     postId = data['postId']
+    #     req = f'/chat/v1.0/chat-{chatId}/artistMessages'
+    #     print(req, postId, data['shareUrl'])
+    #     write_all_requests(req, req, f'raw/post-data/liveChat/{postId}', True, True)
+    #     time.sleep(30)
 
 # DM - not useful?
 '/dm/v1.1/rooms/233441/messages?prev=9223372036854775807'
@@ -256,20 +271,38 @@ def write_all_live_comments():
 
 '/post/v1.0/member-5fb309bc7489a576484431ba8338807e/posts?appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postsV1&filterType=MOMENT&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735177267178&wmd=CeJPpNXyWd2bO4aXZ1C%2B3X0XBT4%3D'
 
+'https://global.apis.naver.com/weverse/wevweb/dm/v1.1/media-box?limit=20&prev=172595359037600&roomId=233441&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735630237384&wmd=jF4mxZb7Cs6Y%2B6XATHg4hj6Y%2Fdc%3D'
+
 def main():
     # req = '/media/v1.0/community-36/searchAllMedia'
     # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
     # req = '/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?fieldSet=postsV1&filterType=MOMENT?after=1696674454222%2C26564616'
+
+
+    video_id = '938B63A55D2CE8B1E45072C520010AFFCC01'
+    msg_id = '1888633265683052747'
+    # req = f'/dm/v1.0/video/{video_id}/playInfo?messageId={msg_id}&roomId=297243'
+
+    req = '/dm/v1.1/rooms/233441/messages?prev=9223372036854775807'
+    req = '/dm/v1.1/rooms/221087/messages'
+    # req = '/dm/v1.1/media-box?limit=20&roomId=233441'
+    # req = '/emotion/v1.0/post-2-154155999/emotions'
     # write_single(req, 'raw/test', False)
+
+    # for name, room in rooms.items():
+    #     req = f'/dm/v1.1/rooms/{room}/messages'
+    #     write_single(req, f'raw/{name}-latest', False)
 
     # write_all_requests(req, req, 'raw/post-data/searchAllMedia', True)
     # write_all_post_media()
+    # write_all_live_comments()
+    write_all_lives()
 
     'https://global.apis.naver.com/weverse/wevweb/post/v1.0/member-5fb309bc7489a576484431ba8338807e/posts?after=1698763879873%2C27023472&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postV1&filterType=MOMENT_VIEWER&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178426948&wmd=xVsr5ooMlAolx3fADGZQguc2CzY%3D'
 
-    for m, id in members.items():
-        req = f'/post/v1.0/member-{id}/posts?fieldSet=postsV1&filterType=MOMENT_VIEWER&limit=1'
-        write_all_requests(req, req, f'raw/post-data/moments/{m}', True)
+    # for m, id in members.items():
+    #     req = f'/post/v1.0/member-{id}/posts?fieldSet=postsV1&filterType=MOMENT_VIEWER&limit=1'
+    #     write_all_requests(req, req, f'raw/post-data/moments/{m}', True)
 
 
 main()
