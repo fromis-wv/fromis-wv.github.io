@@ -68,14 +68,16 @@
     justify-content: center;
     align-content: center;
     display: flex;
-    gap: 48px;
+    flex-wrap: wrap;
+    gap: 5%
 }
 
 .home-link img
 {
-    max-height: 400px;
+	max-height: 300px;
+    min-height: 180px;
     display: block;
-    border-radius: 60px; /* Add rounded corners */
+    border-radius: 10%; /* Add rounded corners */
     box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.4); /* Add a subtle shadow */
     transition: transform 0.1s ease; /* Smooth transition */
 }
@@ -87,9 +89,8 @@
 
 .home-link figcaption
 {
-    font-weight: bold;
     font-style: normal;
-    font-size: 25pt
+    font-size: 2rem
 }
 
 .id-container

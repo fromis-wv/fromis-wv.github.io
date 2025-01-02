@@ -47,7 +47,7 @@ plugins:
       pagination_per_page: 25
       blog_toc: True
       post_readtime: false
-      post_date_format: MMMM d, Y hh:mm
+      post_date_format: MMMM d, yyyy hh:mm
       post_url_format: "{slug}"
       archive: false
   - tags:
