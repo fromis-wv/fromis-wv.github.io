@@ -15,11 +15,11 @@ AUDIO_ID = 'audio'
 
 headers = [DATE_ID, TIME_ID, TEXT_ID, YOUR_TEXT_ID, IMAGE_ID, VIDEO_ID, AUDIO_ID]
 
-skip_duplicate = True
+skip_duplicate = False
 skip_images = True
 
 copy_image = False
-copy_video = False
+copy_video = True
 
 simulate = False
 
@@ -99,7 +99,13 @@ def process_video(root, video, is_video):
 
 def encode_video(in_path, out_path):
     # cmd = ['ffmpeg', '-y', '-i', in_path, '-vf', 'scale=1080:-2', '-vcodec', 'libx265', '-crf', '26', out_path]
-    cmd = ['ffmpeg', '-y', '-i', in_path, '-vcodec', 'libx265', '-crf', '26', out_path]
+    # cmd = ['ffmpeg', '-y', '-i', in_path, '-vcodec', 'libx265', '-crf', '26', out_path]
+
+    cmd = ['ffmpeg', '-y', '-i', in_path,
+           '-vcodec', 'libx264',
+           '-crf', '26',
+           '-preset', 'slow',
+           out_path]
     # if not os.path.exists(out_path):
     result = subprocess.run(cmd, capture_output=True, text=True)
     print('Encode video', result)
@@ -122,8 +128,10 @@ def resize_gif(in_path, out_path):
         # 'ffmpeg -i input.avi  scale=720:-1 -c:a copy output.mkv'
 
 def make_copy(in_path, out_path):
-    if not os.path.exists(out_path):
-        shutil.copy(in_path, out_path)
+    if os.path.exists(out_path) and skip_duplicate:
+        return
+
+    shutil.copy(in_path, out_path)
 
 
 def run_folder(new_source, new_output):
@@ -173,5 +181,5 @@ if __name__ == '__main__':
     #     source_folder = f'raw/{member_name}/posts'
     #     output_folder = f'docs/media/{member_name}/posts'
     #     run_folder(source_folder, output_folder)
-    run_folder('raw/post-media/videos', 'docs/assets/videos')
-    # run_folder('raw/moments-media', 'docs/assets/videos')
+    # run_folder('raw/post-media/videos', 'docs/assets/videos')
+    run_folder('raw/moments-media', 'docs/assets/videos')
