@@ -261,6 +261,17 @@ def write_all_live_comments():
     #     write_all_requests(req, req, f'raw/post-data/liveChat/{postId}', True, True)
     #     time.sleep(30)
 
+def write_all_comments():
+    posts = []
+    with open(f'raw/post-data/all_live_posts.json', 'r', encoding='utf-8') as file:
+        json_data = json.load(file)
+        for data in json_data:
+            postId = data['postId']
+            print('downloading', postId)
+            req = f'/comment/v1.0/post-{postId}/comments?fieldSet=postCommentsV1'
+            write_all_requests(req, req, f'raw/post-data/allComments/{postId}', True, True)
+            time.sleep(5)
+
 # DM - not useful?
 '/dm/v1.1/rooms/233441/messages?prev=9223372036854775807'
 '/post/v1.0/community-36/liveTabPosts'
@@ -286,7 +297,8 @@ def main():
     req = '/dm/v1.1/rooms/221087/messages'
     # req = '/dm/v1.1/media-box?limit=20&roomId=233441'
     # req = '/emotion/v1.0/post-2-154155999/emotions'
-    # write_single(req, 'raw/test', False)
+    req = '/comment/v1.0/post-3-188699870/comments?fieldSet=postCommentsV1'
+    write_single(req, 'raw/test', False)
 
     # for name, room in rooms.items():
     #     req = f'/dm/v1.1/rooms/{room}/messages'
@@ -311,6 +323,7 @@ def main():
 
 
 main()
+# write_all_comments()
 
 # 'https://global.apis.naver.com/weverse/wevweb/post/v1.0/member-67b4c6fb2220ac6705aa97046f3503a1/posts?after=1699369636979%2C27138103&appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=postV1&filterType=MOMENT_VIEWER&language=en&limit=1&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178210447&wmd=Y1OTRioyq7vF2%2FSYTL09CAraDDM%3D'
 # 'https://global.apis.naver.com/weverse/wevweb/member/v1.1/community-36/artistMembers?appId=be4d79eb8fc7bd008ee82c8ec4ff6fd4&fieldSet=artistMembersV1&filterType=MOMENT&language=en&os=WEB&platform=WEB&wpf=pc&wmsgpad=1735178123317&wmd=KHioIqTMvGRFPAxb3jUuMb0WdaE%3D'
